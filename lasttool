@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+
+print_header() {
+  clear
+  cat <<'EOF'
+===============================================
+         30 SEÇİMLİ SUPER NMAP MENYUSU
+===============================================
+
+ 1) Ping Scan (Host Discovery)
+ 2) Quick Scan (Fast Top Ports)
+ 3) Full TCP Scan (1–65535)
+ 4) Full UDP Scan
+ 5) Service + Version Detection
+ 6) OS Detection
+ 7) Aggressive Scan (OS + Traceroute + Scripts)
+ 8) Stealth SYN Scan (root)
+ 9) Top 100 Ports Scan
+10) Top 1000 Ports Scan
+11) Default Script Scan (sC)
+12) Vulnerability Scan (script vuln)
+13) Malware Detection Scan
+14) Brute-force Script Scan
+15) DNS Enumeration Scan
+16) HTTP Security Scan
+17) SSL/TLS Security Scan
+18) SMB Enumeration Scan
+19) NFS Scan
+20) Firewall/IDS Evasion (fragmented)
+21) Decoy Scan (anti-tracking)
+22) Spoofed MAC Scan
+23) Slow Stealth Scan (timing paranoid)
+24) Fast Scan (T5)
+25) Network Discovery (ARP scan)
+26) Traceroute Only
+27) Banner Grabbing
+28) IPv6 Scan
+29) Host Up Detection with Retry
+30) Custom Command Input
+ q) Quit
+
+EOF
+}
+
+explain_and_prepare() {
+  local num="$1"
+  local target="$2"
+
+  case "$num" in
+    1) cmd="nmap -sn $target"; desc="Ping scan — host canlıdırmı?" ;;
+    2) cmd="nmap -F $target"; desc="Quick scan — məşhur portlara baxış." ;;
+    3) cmd="nmap -p- $target"; desc="Bütün TCP portları (1–65535)." ;;
+    4) cmd="nmap -sU $target"; desc="Full UDP scan." ;;
+    5) cmd="nmap -sV $target"; desc="Service + version detection." ;;
+    6) cmd="nmap -O $target"; desc="OS detection." ;;
+    7) cmd="nmap -A $target"; desc="Aggressive scan (OS + Traceroute + Scripts)." ;;
+    8) cmd="sudo nmap -sS $target"; desc="Stealth SYN scan." ;;
+    9) cmd="nmap --top-ports 100 $target"; desc="Top 100 ports." ;;
+    10) cmd="nmap --top-ports 1000 $target"; desc="Top 1000 ports." ;;
+    11) cmd="nmap -sC $target"; desc="Default script scan." ;;
+    12) cmd="nmap --script vuln $target"; desc="Zəiflik aşkarlama." ;;
+    13) cmd="nmap --script malware $target"; desc="Malware detection scan." ;;
+    14) cmd="nmap --script brute $target"; desc="Bruteforce test scripts." ;;
+    15) cmd="nmap --script dns-* $target"; desc="DNS enumeration." ;;
+    16) cmd="nmap --script http-enum $target"; desc="HTTP security scan." ;;
+    17) cmd="nmap --script ssl-enum-ciphers $target"; desc="SSL/TLS cipher analysis." ;;
+    18) cmd="nmap --script smb-enum-shares,smb-enum-users $target"; desc="SMB enumeration." ;;
+    19) cmd="nmap --script nfs-showmount $target"; desc="NFS scan." ;;
+    20) cmd="nmap -f $target"; desc="Firewall evasion (fragment packets)." ;;
+    21) cmd="nmap -D RND:10 $target"; desc="Decoy scan — anti-tracking." ;;
+    22) cmd="nmap --spoof-mac 00:11:22:33:44:55 $target"; desc="MAC spoofing scan." ;;
+    23) cmd="nmap -T0 $target"; desc="Paranoid mode — ən yavaş, stealth scan." ;;
+    24) cmd="nmap -T5 $target"; desc="Fast mode — maksimum sürət." ;;
+    25) cmd="nmap -PR $target"; desc="ARP network discovery." ;;
+    26) cmd="nmap --traceroute $target"; desc="Traceroute only." ;;
+    27) cmd="nmap --script=banner $target"; desc="Banner grabbing." ;;
+    28) cmd="nmap -6 $target"; desc="IPv6 scan." ;;
+    29) cmd="nmap --max-retries 5 $target"; desc="Host up detection with retry." ;;
+    30) read -rp "Custom nmap komandasını daxil edin: " cmd; desc="İstifadəçi əmri." ;;
+    *)
+      echo "Yanlış seçim!"
+      return 1 ;;
+  esac
+
+  echo
+  echo "Seçim: $num"
+  echo "İzah: $desc"
+  echo "Komanda: $cmd"
+  echo
+  return 0
+}
+
+confirm_and_maybe_run() {
+  while true; do
+    read -rp "Komandanı icra edim? (y = run / c = copy / n = skip): " ans
+    case "$ans" in
+      y|Y) eval "$cmd"; break ;;
+      c|C)
+        if command -v pbcopy >/dev/null; then printf "%s" "$cmd" | pbcopy; echo "Clipboard-a kopyalandı.";
+        elif command -v xclip >/dev/null; then printf "%s" "$cmd" | xclip -selection clipboard; echo "Kopyalandı.";
+        else echo "$cmd"; fi
+        break ;;
+      n|N) break ;;
+      *) echo "y, c və ya n daxil edin." ;;
+    esac
+  done
+}
+
+while true; do
+  print_header
+  read -rp "Seçiminiz (1–30, q): " choice
+  [[ "$choice" == "q" ]] && exit 0
+
+  read -rp "Target IP və ya domain: " target
+
+  explain_and_prepare "$choice" "$target" || continue
+  confirm_and_maybe_run
+
+  read -rp "Davam? (enter = bəli / q = çıx) " again
+  [[ "$again" == "q" ]] && exit 0
+done
